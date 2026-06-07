@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>初中生物必背 · 110句闪卡</title>
+<style>
+  :root {
+    --bg: #f0f4f0;
+    --card: #ffffff;
+    --accent: #4a8f6a;
+    --accent-light: #7db89a;
+    --accent-dark: #356b4f;
+    --text: #2c3e2c;
+    --muted: #7a8a7a;
+    --green: #4caf50;
+    --yellow: #ff9800;
+    --red: #e57373;
+    --border: #d0ddd0;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+
+  /* 页面容器 */
+  .page { display: none; height: 100%; flex-direction: column; }
+  .page.active { display: flex; }
+
+  /* 首页 */
+  .home-header {
+    text-align: center; padding: 32px 20px 20px;
+  }
+  .home-header h1 { margin: 0; font-size: 1.6rem; color: var(--accent-dark); letter-spacing: 1px; }
+  .home-header p { margin: 6px 0 0; color: var(--muted); font-size: .9rem; }
+
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    padding: 0 16px 16px;
+  }
+  .stat-cell {
+    background: var(--card); border-radius: 14px; padding: 14px 8px; text-align: center;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .stat-cell .num { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+  .stat-cell .label { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+
+  .mode-list { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
+  .mode-btn {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card); border: none; border-radius: 14px; padding: 16px;
+    box-shadow: 0 2px 8px var(--shadow); cursor: pointer; text-align: left; width: 100%;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .mode-btn:active { transform: scale(0.98); box-shadow: 0 1px 4px var(--shadow); }
+  .mode-btn .icon {
+    width: 44px; height: 44px; border-radius: 12px; background: var(--accent-light); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+  }
+  .mode-btn .info { flex: 1; }
+  .mode-btn .info .title { font-size: 1rem; font-weight: 600; color: var(--text); }
+  .mode-btn .info .desc { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+  .mode-btn .arrow { color: var(--muted); font-size: 1.1rem; }
+
+  /* 学习页 */
+  .study-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--border);
+  }
+  .study-header .back-btn {
+    border: none; background: transparent; color: var(--accent); font-size: .9rem; cursor: pointer; padding: 6px 10px;
+  }
+  .study-header .progress { font-size: .85rem; color: var(--muted); }
+  .study-header .progress-bar {
+    width: 100px; height: 6px; background: #e0e8e0; border-radius: 3px; overflow: hidden; margin-top: 4px;
+  }
+  .study-header .progress-bar .fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }
+
+  .study-body {
+    flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 16px; position: relative;
+  }
+
+  .card-area {
+    flex: 1; display: flex; align-items: center; justify-content: center; position: relative;
+  }
+
+  .flash-card {
+    background: var(--card); border-radius: 18px; width: 100%; max-width: 560px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.1); padding: 28px 22px;
+    display: flex; flex-direction: column; justify-content: center; min-height: 220px;
+    cursor: pointer; transition: transform .2s, box-shadow .2s; position: relative;
+    touch-action: pan-y;
+  }
+  .flash-card:active { transform: scale(0.98); }
+
+  .card-num {
+    position: absolute; top: 12px; right: 14px; font-size: .7rem; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 10px;
+  }
+  .card-category {
+    position: absolute; top: 12px; left: 14px; font-size: .65rem; color: var(--accent); background: rgba(74,143,106,0.1); padding: 2px 8px; border-radius: 10px; font-weight: 600;
+  }
+
+  .card-content { text-align: center; font-size: 1.15rem; line-height: 1.8; margin-top: 8px; }
+  .card-content .blank { display: inline-block; min-width: 3em; border-bottom: 2px solid var(--accent); margin: 0 2px; color: transparent; }
+  .card-content .blank.revealed { color: var(--accent-dark); font-weight: 700; border-bottom-color: var(--accent-dark); }
+  .card-content .highlight { color: var(--accent-dark); font-weight: 700; background: rgba(74,143,106,0.12); padding: 0 4px; border-radius: 4px; }
+  .card-hint { text-align: center; font-size: .75rem; color: var(--muted); margin-top: 14px; }
+
+  .study-footer {
+    padding: 12px 16px 24px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row button {
+    flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; color: #fff; transition: opacity .2s;
+  }
+  .btn-row button:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-green { background: var(--green); }
+  .btn-yellow { background: var(--yellow); }
+  .btn-gray { background: #9e9e9e; }
+  .btn-nav { background: var(--card); color: var(--text); border: 1px solid var(--border) !important; }
+
+  .swipe-hint { text-align: center; font-size: .7rem; color: #bbb; margin-top: 4px; }
+
+  /* 列表页 */
+  .list-toolbar {
+    padding: 10px 16px; display: flex; gap: 8px; background: var(--card); border-bottom: 1px solid var(--border);
+  }
+  .list-toolbar input, .list-toolbar select {
+    padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: .85rem; color: var(--text);
+  }
+  .list-toolbar input { flex: 1; }
+  .list-container { flex: 1; overflow-y: auto; padding: 8px 16px; }
+  .list-item {
+    background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+    box-shadow: 0 1px 4px var(--shadow); cursor: pointer;
+  }
+  .list-item .item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .list-item .item-id { font-size: .7rem; color: var(--muted); background: var(--bg); padding: 1px 6px; border-radius: 6px; }
+  .list-item .item-cat { font-size: .65rem; color: var(--accent); }
+  .list-item .item-text { font-size: .95rem; line-height: 1.6; }
+  .list-item .item-text .hi { font-weight: 700; color: var(--accent-dark); background: rgba(74,143,106,0.1); padding: 0 2px; border-radius: 3px; }
+  .list-item .item-status { margin-top: 6px; font-size: .7rem; color: var(--green); }
+  .list-item .item-status.pending { color: var(--muted); }
+
+  /* 设置页/关于 */
+  .settings-list { padding: 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
+  .setting-row {
+    background: var(--card); border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 1px 4px var(--shadow); display: flex; justify-content: space-between; align-items: center;
+  }
+  .setting-row .s-label { font-size: .95rem; }
+  .setting-row .s-desc { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+  .setting-row button {
+    padding: 6px 14px; border: 1px solid var(--accent); border-radius: 8px; background: #fff; color: var(--accent); font-size: .8rem; cursor: pointer;
+  }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 40px 20px; }
+  .empty-state .big { font-size: 3rem; margin-bottom: 8px; }
+
+  /* 底部导航 */
+  .tab-bar {
+    display: flex; background: var(--card); border-top: 1px solid var(--border); padding: 6px 0; padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  }
+  .tab-bar button {
+    flex: 1; border: none; background: transparent; color: var(--muted); font-size: .65rem; padding: 4px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .tab-bar button.active { color: var(--accent); }
+  .tab-bar button .tab-icon { font-size: 1.3rem; }
+
+  /* 动画 */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn .3s ease; }
+
+  .toast {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.75); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: .85rem; z-index: 1000; pointer-events: none; opacity: 0; transition: opacity .3s;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ====== 首页 ====== -->
+<div class="page active" id="page-home">
+  <div class="home-header">
+    <h1>初中生物必背</h1>
+    <p>110句 · 随时随地记忆</p>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-cell">
+      <div class="num" id="stat-total">110</div>
+      <div class="label">总句数</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num" id="stat-mastered">0</div>
+      <div class="label">已记住</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num" id="stat-review">0</div>
+      <div class="label">待复习</div>
+    </div>
+  </div>
+  <div class="mode-list">
+    <button class="mode-btn" onclick="startStudy('all')">
+      <div class="icon">📚</div>
+      <div class="info">
+        <div class="title">顺序学习</div>
+        <div class="desc">按编号顺序逐句记忆，适合系统复习</div>
+      </div>
+      <div class="arrow">›</div>
+    </button>
+    <button class="mode-btn" onclick="startStudy('random')">
+      <div class="icon">🎲</div>
+      <div class="info">
+        <div class="title">随机抽测</div>
+        <div class="desc">打乱顺序随机出题，检验真实掌握度</div>
+      </div>
+      <div class="arrow">›</div>
+    </button>
+    <button class="mode-btn" onclick="startStudy('review')">
+      <div class="icon">🔁</div>
+      <div class="info">
+        <div class="title">错题重练</div>
+        <div class="desc">只复习标记为"需复习"的句子</div>
+      </div>
+      <div class="arrow">›</div>
+    </button>
+    <button class="mode-btn" onclick="showPage('page-list')">
+      <div class="icon">📋</div>
+      <div class="info">
+        <div class="title">全句浏览</div>
+        <div class="desc">列表查看所有句子，支持搜索和分类</div>
+      </div>
+      <div class="arrow">›</div>
+    </button>
+  </div>
+</div>
+
+<!-- ====== 学习页 ====== -->
+<div class="page" id="page-study">
+  <div class="study-header">
+    <button class="back-btn" onclick="showPage('page-home')">← 返回</button>
+    <div>
+      <div class="progress"><span id="study-current">1</span> / <span id="study-total">110</span></div>
+      <div class="progress-bar"><div class="fill" id="study-progress" style="width:0%"></div></div>
+    </div>
+    <div style="width:50px;"></div>
+  </div>
+  <div class="study-body">
+    <div class="card-area" id="card-area">
+      <div class="flash-card" id="flash-card" onclick="revealCard()">
+        <span class="card-num" id="card-num">#1</span>
+        <span class="card-category" id="card-cat">细胞</span>
+        <div class="card-content" id="card-content"></div>
+        <div class="card-hint" id="card-hint">点击卡片查看答案</div>
+      </div>
+    </div>
+  </div>
+  <div class="study-footer">
+    <div class="btn-row">
+      <button class="btn-nav" onclick="prevCard()">上一句</button>
+      <button class="btn-yellow" id="btn-reveal" onclick="revealCard()">看答案</button>
+      <button class="btn-nav" onclick="nextCard()">下一句</button>
+    </div>
+    <div class="btn-row" id="rate-btns" style="display:none;">
+      <button class="btn-green" onclick="rateCard(true)">记住了 ✓</button>
+      <button class="btn-yellow" onclick="rateCard(false)">需复习 ↻</button>
+    </div>
+    <div class="swipe-hint">点击卡片或按钮查看答案 · 支持左右滑动切换</div>
+  </div>
+</div>
+
+<!-- ====== 列表页 ====== -->
+<div class="page" id="page-list">
+  <div class="study-header">
+    <button class="back-btn" onclick="showPage('page-home')">← 返回</button>
+    <div style="font-weight:600;">全句浏览</div>
+    <div style="width:50px;"></div>
+  </div>
+  <div class="list-toolbar">
+    <input type="text" id="list-search" placeholder="搜索关键词..." oninput="renderList()">
+    <select id="list-filter" onchange="renderList()">
+      <option value="">全部分类</option>
+      <option value="实验">实验操作</option>
+      <option value="细胞">细胞结构</option>
+      <option value="分类">生物分类</option>
+      <option value="植物">植物</option>
+      <option value="动物">动物</option>
+      <option value="生态">生态系统</option>
+      <option value="营养">营养消化</option>
+      <option value="循环">循环呼吸</option>
+      <option value="泌尿">泌尿排泄</option>
+      <option value="神经">神经调节</option>
+      <option value="感觉">感觉运动</option>
+      <option value="内分泌">内分泌</option>
+      <option value="健康">健康免疫</option>
+      <option value="生殖">生殖发育</option>
+      <option value="遗传">遗传变异</option>
+      <option value="进化">生物进化</option>
+    </select>
+  </div>
+  <div class="list-container" id="list-container"></div>
+</div>
+
+<!-- ====== 设置页 ====== -->
+<div class="page" id="page-settings">
+  <div class="study-header">
+    <button class="back-btn" onclick="showPage('page-home')">← 返回</button>
+    <div style="font-weight:600;">设置</div>
+    <div style="width:50px;"></div>
+  </div>
+  <div class="settings-list">
+    <div class="setting-row">
+      <div>
+        <div class="s-label">重置学习进度</div>
+        <div class="s-desc">清空所有"记住/复习"标记</div>
+      </div>
+      <button onclick="resetProgress()">重置</button>
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="s-label">关于</div>
+        <div class="s-desc">初中生物基础必背110句 · 闪卡记忆</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部导航 -->
+<div class="tab-bar">
+  <button class="active" onclick="showPage('page-home')">
+    <span class="tab-icon">🏠</span>
+    <span>首页</span>
+  </button>
+  <button onclick="showPage('page-list')">
+    <span class="tab-icon">📋</span>
+    <span>浏览</span>
+  </button>
+  <button onclick="showPage('page-settings')">
+    <span class="tab-icon">⚙️</span>
+    <span>设置</span>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================== 数据 ========================== */
+const RAW_CARDS = [
+  {id:1, cat:"实验", q:"如果物象在视野中偏右上，则应该往____移动玻片标本。", a:"如果物象在视野中偏右上，则应该往<span class='highlight'>右上</span>移动玻片标本。"},
+  {id:2, cat:"实验", q:"制作植物细胞临时装片在载玻片上滴____，若是人口腔上皮细胞则应该滴加____。用于制作临时玻片标本的生物材料是____。", a:"制作植物细胞临时装片在载玻片上滴<span class='highlight'>清水</span>，若是人口腔上皮细胞则应该滴加<span class='highlight'>生理盐水</span>。用于制作临时玻片标本的生物材料是<span class='highlight'>薄而透明</span>的。"},
+  {id:3, cat:"细胞", q:"动植物细胞共有的结构：____、____、____、____。", a:"动植物细胞共有的结构：<span class='highlight'>细胞膜</span>、<span class='highlight'>细胞质</span>、<span class='highlight'>细胞核</span>、<span class='highlight'>线粒体</span>。"},
+  {id:4, cat:"细胞", q:"植物细胞特有的结构是：____、____、____。但不是所有植物细胞都有叶绿体和中央大液泡。", a:"植物细胞特有的结构是：<span class='highlight'>细胞壁</span>、<span class='highlight'>中央大液泡</span>、<span class='highlight'>叶绿体</span>。但不是所有植物细胞都有叶绿体和中央大液泡。"},
+  {id:5, cat:"细胞", q:"____的功能：控制细胞内外物质的进出，保持细胞内部环境的相对稳定。", a:"<span class='highlight'>细胞膜</span>的功能：控制细胞内外物质的进出，保持细胞内部环境的相对稳定。"},
+  {id:6, cat:"细胞", q:"线粒体与____作用有关，叶绿体与____作用有关。", a:"线粒体与<span class='highlight'>呼吸</span>作用有关，叶绿体与<span class='highlight'>光合</span>作用有关。"},
+  {id:7, cat:"细胞", q:"生物的生长现象与生物的____、____有关。", a:"生物的生长现象与生物的<span class='highlight'>细胞体积增大</span>、<span class='highlight'>数量增多</span>有关。"},
+  {id:8, cat:"细胞", q:"细胞分裂的结果是____；细胞分化的结果是____。", a:"细胞分裂的结果是<span class='highlight'>细胞数量增多</span>；细胞分化的结果是<span class='highlight'>形成不同的组织</span>。"},
+  {id:9, cat:"细胞", q:"人和动物的组织有____、____、____和____，其他组织是植物组织。", a:"人和动物的组织有<span class='highlight'>上皮组织</span>、<span class='highlight'>神经组织</span>、<span class='highlight'>结缔组织</span>和<span class='highlight'>肌肉组织</span>，其他组织是植物组织。"},
+  {id:10, cat:"细胞", q:"绿色开花植物体的结构层次为：____。高等动物的结构层次为：____。", a:"绿色开花植物体的结构层次为：<span class='highlight'>细胞→组织→器官→植物体</span>。高等动物的结构层次为：<span class='highlight'>细胞→组织→器官→系统→个体</span>。"},
+  {id:11, cat:"分类", q:"生物分类的等级从高到低依次是____。其中____是生物界最基本的分类单位。", a:"生物分类的等级从高到低依次是<span class='highlight'>界、门、纲、目、科、属、种</span>。其中<span class='highlight'>种</span>是生物界最基本的分类单位。"},
+  {id:12, cat:"分类", q:"生物所处的共同单位越____，他们之间的相似程度越____，亲缘关系越____。", a:"生物所处的共同单位越<span class='highlight'>小</span>，他们之间的相似程度越<span class='highlight'>大</span>，亲缘关系越<span class='highlight'>近</span>。"},
+  {id:13, cat:"植物", q:"四类植物由简单到复杂依次是：____（海带）、____（葫芦藓）、____（荷叶铁线蕨）、____（裸子植物、被子植物）。", a:"四类植物由简单到复杂依次是：<span class='highlight'>藻类</span>（海带）、<span class='highlight'>苔藓植物</span>（葫芦藓）、<span class='highlight'>蕨类植物</span>（荷叶铁线蕨）、<span class='highlight'>种子植物</span>（裸子植物、被子植物）。"},
+  {id:14, cat:"植物", q:"藻类植物大多数生活在____，没有____的分化。", a:"藻类植物大多数生活在<span class='highlight'>水中</span>，没有<span class='highlight'>根茎叶</span>的分化。"},
+  {id:15, cat:"植物", q:"苔藓植物生活在____，没有根，只有____，没有____，可作为监测____的指示植物。", a:"苔藓植物生活在<span class='highlight'>阴湿的陆地</span>，没有根，只有<span class='highlight'>茎和叶</span>，没有<span class='highlight'>输导组织</span>，可作为监测<span class='highlight'>空气污染</span>的指示植物。"},
+  {id:16, cat:"植物", q:"蕨类植物（荷叶铁线蕨）生活在____，具有____的分化，体内具有____。", a:"蕨类植物（荷叶铁线蕨）生活在<span class='highlight'>阴湿的陆地</span>，具有<span class='highlight'>根茎叶</span>的分化，体内具有<span class='highlight'>输导组织</span>。"},
+  {id:17, cat:"植物", q:"裸子植物（松、杉、柏、苏铁、银杏）____发达，种子外没有____包裹着，因而无果实这一器官，生殖过程不需要____。", a:"裸子植物（松、杉、柏、苏铁、银杏）<span class='highlight'>根茎叶</span>发达，种子外没有<span class='highlight'>果皮</span>包裹着，因而无果实这一器官，生殖过程不需要<span class='highlight'>水</span>。"},
+  {id:18, cat:"植物", q:"\"白果\"是银杏的____，不能叫果实。", a:"\"白果\"是银杏的<span class='highlight'>种子</span>，不能叫果实。"},
+  {id:19, cat:"植物", q:"____是最高等的植物类群，有根、茎、叶、花、果实、种子六大器官，种子外有____包裹着，生殖过程不需要____。", a:"<span class='highlight'>被子植物</span>是最高等的植物类群，有根、茎、叶、花、果实、种子六大器官，种子外有<span class='highlight'>果皮</span>包裹着，生殖过程不需要<span class='highlight'>水</span>。"},
+  {id:20, cat:"进化", q:"进化规律：____、____。", a:"进化规律：<span class='highlight'>从简单到复杂</span>、<span class='highlight'>从水生到陆生</span>。"},
+  {id:21, cat:"动物", q:"无脊椎动物由简单到复杂依次是：线形动物（____）、环节动物（____）、软体动物（____）、节肢动物（____、____）", a:"无脊椎动物由简单到复杂依次是：线形动物（<span class='highlight'>蛔虫</span>）、环节动物（<span class='highlight'>蚯蚓</span>）、软体动物（<span class='highlight'>蜗牛</span>）、节肢动物（<span class='highlight'>蝗虫</span>、<span class='highlight'>家蚕</span>）"},
+  {id:22, cat:"动物", q:"节肢动物：是动物界中种类最多、数量最大、分布最广的动物类群，其主要特征是身体____，体表有坚硬的____和____的附肢。昆虫是具有____对翅、____对足的节肢动物。", a:"节肢动物：是动物界中种类最多、数量最大、分布最广的动物类群，其主要特征是身体<span class='highlight'>分节</span>，体表有坚硬的<span class='highlight'>外骨骼</span>和<span class='highlight'>分节</span>的附肢。昆虫是具有<span class='highlight'>2</span>对翅、<span class='highlight'>3</span>对足的节肢动物。"},
+  {id:23, cat:"动物", q:"脊椎动物由简单到复杂依次是：鱼类（____）、两栖类（____）、爬行类（____）、鸟类（____）、哺乳类（____）。", a:"脊椎动物由简单到复杂依次是：鱼类（<span class='highlight'>鲫鱼</span>）、两栖类（<span class='highlight'>青蛙</span>）、爬行类（<span class='highlight'>扬子鳄</span>）、鸟类（<span class='highlight'>丹顶鹤</span>）、哺乳类（<span class='highlight'>大熊猫</span>）。"},
+  {id:24, cat:"动物", q:"鱼类适应水中生活的特点：体型呈____，用____呼吸，用____游泳，体表有鳞片，体侧有____能感知水流方向。", a:"鱼类适应水中生活的特点：体型呈<span class='highlight'>流线型</span>，用<span class='highlight'>鳃</span>呼吸，用<span class='highlight'>鳍</span>游泳，体表有鳞片，体侧有<span class='highlight'>侧线</span>能感知水流方向。"},
+  {id:25, cat:"动物", q:"两栖类：由水生向陆生进化的过渡类群，生殖过程还不能完全离开水，只能生活在潮湿近水的地方。幼体生活在水中，用____呼吸；大多数成体生活在陆地上，用____呼吸，皮肤裸露，辅助呼吸。", a:"两栖类：由水生向陆生进化的过渡类群，生殖过程还不能完全离开水，只能生活在潮湿近水的地方。幼体生活在水中，用<span class='highlight'>鳃</span>呼吸；大多数成体生活在陆地上，用<span class='highlight'>肺</span>呼吸，皮肤裸露，辅助呼吸。"},
+  {id:26, cat:"动物", q:"爬行类是真正的陆生动物，____、____、____、____。", a:"爬行类是真正的陆生动物，<span class='highlight'>海龟</span>、<span class='highlight'>鳄鱼</span>、<span class='highlight'>蜥蜴</span>、<span class='highlight'>蛇</span>。"},
+  {id:27, cat:"动物", q:"体温恒定的动物有____。", a:"体温恒定的动物有<span class='highlight'>鸟类和哺乳类</span>。"},
+  {id:28, cat:"细胞", q:"病毒没有____，必须____生活。", a:"病毒没有<span class='highlight'>细胞结构</span>，必须<span class='highlight'>寄生</span>生活。"},
+  {id:29, cat:"细胞", q:"细菌（杆菌、球菌、螺旋菌等）____，属于____。泡菜、酸奶制作需要____。", a:"细菌（杆菌、球菌、螺旋菌等）<span class='highlight'>无成形细胞核</span>，属于<span class='highlight'>原核生物</span>。泡菜、酸奶制作需要<span class='highlight'>乳酸菌</span>。"},
+  {id:30, cat:"细胞", q:"真菌（酵母菌、霉菌、木耳等）和动植物都有____，它们都是____。面包、馒头、酿酒需要____。", a:"真菌（酵母菌、霉菌、木耳等）和动植物都有<span class='highlight'>成形细胞核</span>，它们都是<span class='highlight'>真核生物</span>。面包、馒头、酿酒需要<span class='highlight'>酵母菌</span>。"},
+  {id:31, cat:"生态", q:"生物多样性的保护最有效的是____，主要场所是____。植物园、动物园、水族馆和基因库等的建设是实施____的主要手段。", a:"生物多样性的保护最有效的是<span class='highlight'>就地保护</span>，主要场所是<span class='highlight'>自然保护区</span>。植物园、动物园、水族馆和基因库等的建设是实施<span class='highlight'>迁地保护</span>的主要手段。"},
+  {id:32, cat:"生态", q:"动物体能量的来源是____，通过____作用释放出能量，其中部分能量用于生命活动。最终来源是____。", a:"动物体能量的来源是<span class='highlight'>食物</span>，通过<span class='highlight'>呼吸</span>作用释放出能量，其中部分能量用于生命活动。最终来源是<span class='highlight'>太阳能</span>。"},
+  {id:33, cat:"生态", q:"生态系统由____构成，生物成分包括____、____和____。", a:"生态系统由<span class='highlight'>生物成分和非生物成分</span>构成，生物成分包括<span class='highlight'>生产者</span>、<span class='highlight'>消费者</span>和<span class='highlight'>分解者</span>。"},
+  {id:34, cat:"生态", q:"能量流动：____、____。能量流动起点是从____通过____固定____开始。____所含能量最多，____能量最少。", a:"能量流动：<span class='highlight'>单向流动</span>、<span class='highlight'>逐级递减</span>。能量流动起点是从<span class='highlight'>生产者</span>通过<span class='highlight'>光合作用</span>固定<span class='highlight'>太阳能</span>开始。<span class='highlight'>生产者</span>所含能量最多，<span class='highlight'>食物链末端生物</span>能量最少。"},
+  {id:35, cat:"生态", q:"碳循环的主要形式：____，二氧化碳进入生态系统的途径是____。", a:"碳循环的主要形式：<span class='highlight'>二氧化碳</span>，二氧化碳进入生态系统的途径是<span class='highlight'>生产者的光合作用</span>。"},
+  {id:36, cat:"生态", q:"一般来说，生态系统中的生物种类越____，食物链和食物网越____，调节能力越____。但调节能力也是有限的。森林调节能力____，农田调节能力____。", a:"一般来说，生态系统中的生物种类越<span class='highlight'>多</span>，食物链和食物网越<span class='highlight'>复杂</span>，调节能力越<span class='highlight'>强</span>。但调节能力也是有限的。森林调节能力<span class='highlight'>强</span>，农田调节能力<span class='highlight'>弱</span>。"},
+  {id:37, cat:"植物", q:"大豆种子包括____，____是新植物体的幼体，包括____、____、____、____。", a:"大豆种子包括<span class='highlight'>种皮和胚</span>，<span class='highlight'>胚</span>是新植物体的幼体，包括<span class='highlight'>胚芽</span>、<span class='highlight'>胚轴</span>、<span class='highlight'>胚根</span>、<span class='highlight'>子叶</span>。"},
+  {id:38, cat:"植物", q:"胚芽发育成____，胚根发育成____，胚轴发育成____，____提供营养。", a:"胚芽发育成<span class='highlight'>茎和叶</span>，胚根发育成<span class='highlight'>根</span>，胚轴发育成<span class='highlight'>连接根和茎的部分</span>，<span class='highlight'>子叶和胚乳</span>提供营养。"},
+  {id:39, cat:"植物", q:"种子萌发自身条件具有____；外界条件是____。", a:"种子萌发自身条件具有<span class='highlight'>完整的、有活力的胚</span>；外界条件是<span class='highlight'>水、空气和适宜的温度</span>。"},
+  {id:40, cat:"植物", q:"根尖中吸收水和无机盐的主要部位是____。移栽带土是为了保护____。", a:"根尖中吸收水和无机盐的主要部位是<span class='highlight'>成熟区</span>。移栽带土是为了保护<span class='highlight'>成熟区</span>。"},
+  {id:41, cat:"植物", q:"外界溶液浓度____细胞的细胞液浓度，细胞____；例如拌黄瓜、拌西红柿、烧苗。", a:"外界溶液浓度<span class='highlight'>大于</span>细胞的细胞液浓度，细胞<span class='highlight'>失水</span>；例如拌黄瓜、拌西红柿、烧苗。"},
+  {id:42, cat:"植物", q:"水和无机盐是由木质部中的____向____运输的。____由韧皮部中的筛管向下运输的。", a:"水和无机盐是由木质部中的<span class='highlight'>导管</span>向<span class='highlight'>上</span>运输的。<span class='highlight'>有机物</span>由韧皮部中的筛管向下运输的。"},
+  {id:43, cat:"植物", q:"一朵花的最重要部分是____和____，因为它们与____的形成有关。", a:"一朵花的最重要部分是<span class='highlight'>雌蕊</span>和<span class='highlight'>雄蕊</span>，因为它们与<span class='highlight'>果实和种子</span>的形成有关。"},
+  {id:44, cat:"植物", q:"____发育成果实，____发育成果皮，____发育成种子，____发育成胚，____发育成种皮。", a:"<span class='highlight'>子房</span>发育成果实，<span class='highlight'>子房壁</span>发育成果皮，<span class='highlight'>胚珠</span>发育成种子，<span class='highlight'>受精卵</span>发育成胚，<span class='highlight'>珠被</span>发育成种皮。"},
+  {id:45, cat:"植物", q:"光合作用：绿色植物通过____，利用____，把____转变成贮存能量的____，并且释放出____的过程。", a:"光合作用：绿色植物通过<span class='highlight'>叶绿体</span>，利用<span class='highlight'>光能</span>，把<span class='highlight'>二氧化碳和水</span>转变成贮存能量的<span class='highlight'>有机物</span>，并且释放出<span class='highlight'>氧气</span>的过程。"},
+  {id:46, cat:"植物", q:"\"绿叶在光下制造淀粉\"的实验变量：____；第一步暗处理目的是让叶内原有淀粉____；叶片见光部分变蓝，因为有____产生；小烧杯中是____。", a:"\"绿叶在光下制造淀粉\"的实验变量：<span class='highlight'>光</span>；第一步暗处理目的是让叶内原有淀粉<span class='highlight'>运走和消耗</span>；叶片见光部分变蓝，因为有<span class='highlight'>淀粉</span>产生；小烧杯中是<span class='highlight'>酒精</span>。"},
+  {id:47, cat:"植物", q:"呼吸作用：吸收____，将有机物分解成____，同时将储存在有机物中的能量释放出来，供给各项生命活动的需要。", a:"呼吸作用：吸收<span class='highlight'>氧</span>，将有机物分解成<span class='highlight'>二氧化碳和水</span>，同时将储存在有机物中的能量释放出来，供给各项生命活动的需要。"},
+  {id:48, cat:"植物", q:"提高农作物产量的方法：____，____，____，____，____。", a:"提高农作物产量的方法：<span class='highlight'>增加光照强度</span>，<span class='highlight'>延长光照时间</span>，<span class='highlight'>提高二氧化碳浓度</span>，<span class='highlight'>白天温度升高</span>，<span class='highlight'>夜间温度降低</span>。"},
+  {id:49, cat:"植物", q:"植物通过光合作用合成____（食物来源），释放____（维持生物圈碳氧平衡），实现\"碳中和\"和\"碳达峰\"。", a:"植物通过光合作用合成<span class='highlight'>有机物</span>（食物来源），释放<span class='highlight'>氧气</span>（维持生物圈碳氧平衡），实现\"碳中和\"和\"碳达峰\"。"},
+  {id:50, cat:"营养", q:"人体所需要的主要营养物质：____、____、____、____、____、____，其中既是人体组成物质又是供能物质的是____、____、____。", a:"人体所需要的主要营养物质：<span class='highlight'>蛋白质</span>、<span class='highlight'>糖类</span>、<span class='highlight'>脂肪</span>、<span class='highlight'>维生素</span>、<span class='highlight'>水</span>、<span class='highlight'>无机盐</span>，其中既是人体组成物质又是供能物质的是<span class='highlight'>蛋白质</span>、<span class='highlight'>糖类</span>、<span class='highlight'>脂肪</span>。"},
+  {id:51, cat:"营养", q:"缺乏维生素A，会患____；缺乏维生素C，会患____；缺乏维生素D，会患____、____。", a:"缺乏维生素A，会患<span class='highlight'>夜盲症</span>；缺乏维生素C，会患<span class='highlight'>坏血病</span>；缺乏维生素D，会患<span class='highlight'>佝偻病</span>、<span class='highlight'>骨质疏松</span>。"},
+  {id:52, cat:"营养", q:"缺钙，儿童易患____，老年人易患____；缺铁，易患____；缺碘，易患____（俗称：大脖子病）。", a:"缺钙，儿童易患<span class='highlight'>佝偻病</span>，老年人易患<span class='highlight'>骨质疏松</span>；缺铁，易患<span class='highlight'>贫血</span>；缺碘，易患<span class='highlight'>地方性甲状腺肿</span>（俗称：大脖子病）。"},
+  {id:53, cat:"营养", q:"一日三餐的热能供给的合理分配应为早____、中____、晚____。", a:"一日三餐的热能供给的合理分配应为早<span class='highlight'>25-30%</span>、中<span class='highlight'>35-40%</span>、晚<span class='highlight'>30-35%</span>。"},
+  {id:54, cat:"营养", q:"消化系统包括____；____是食物消化的场所。", a:"消化系统包括<span class='highlight'>消化道和消化腺</span>；<span class='highlight'>消化道</span>是食物消化的场所。"},
+  {id:55, cat:"营养", q:"____是最大的消化腺，能分泌____；____是消化和吸收的主要器官。", a:"<span class='highlight'>肝脏</span>是最大的消化腺，能分泌<span class='highlight'>胆汁</span>；<span class='highlight'>小肠</span>是消化和吸收的主要器官。"},
+  {id:56, cat:"营养", q:"口腔中只能将____消化为____，胃中只能初步消化____，____中可消化糖类、蛋白质和脂肪。", a:"口腔中只能将<span class='highlight'>淀粉</span>消化为<span class='highlight'>麦芽糖</span>，胃中只能初步消化<span class='highlight'>蛋白质</span>，<span class='highlight'>小肠</span>中可消化糖类、蛋白质和脂肪。"},
+  {id:57, cat:"营养", q:"除____外，各种消化液均含有____；酶参与的消化需要____。", a:"除<span class='highlight'>胆汁</span>外，各种消化液均含有<span class='highlight'>酶</span>；酶参与的消化需要<span class='highlight'>适宜的温度</span>。"},
+  {id:58, cat:"循环", q:"血液由____组成，血细胞包括____（最多）、____（最大）和____（最小）。", a:"血液由<span class='highlight'>血浆和血细胞</span>组成，血细胞包括<span class='highlight'>红细胞</span>（最多）、<span class='highlight'>白细胞</span>（最大）和<span class='highlight'>血小板</span>（最小）。"},
+  {id:59, cat:"循环", q:"\"切脉\"搭的是____，\"挂水\"挂的是____，进行物质交换的是____。", a:"\"切脉\"搭的是<span class='highlight'>动脉</span>，\"挂水\"挂的是<span class='highlight'>静脉</span>，进行物质交换的是<span class='highlight'>毛细血管</span>。"},
+  {id:60, cat:"循环", q:"血管中血流方向：____。", a:"血管中血流方向：<span class='highlight'>动脉→毛细血管→静脉</span>。"},
+  {id:61, cat:"循环", q:"红细胞可以运输____，数目少患____；白细胞可以____，数目多患____；血小板可促进____。", a:"红细胞可以运输<span class='highlight'>氧气</span>，数目少患<span class='highlight'>贫血</span>；白细胞可以<span class='highlight'>吞噬病菌</span>，数目多患<span class='highlight'>炎症</span>；血小板可促进<span class='highlight'>止血</span>。"},
+  {id:62, cat:"循环", q:"心脏结构：____；心壁厚的为____（与自己左右相反），____壁最厚；与心脏相连的血管竖直方向是____，倒弯钩状是____，斜T状为____，剩余为____。", a:"心脏结构：<span class='highlight'>上房下室</span>；心壁厚的为<span class='highlight'>左侧</span>（与自己左右相反），<span class='highlight'>左心室</span>壁最厚；与心脏相连的血管竖直方向是<span class='highlight'>上下腔静脉</span>，倒弯钩状是<span class='highlight'>主动脉</span>，斜T状为<span class='highlight'>肺动脉</span>，剩余为<span class='highlight'>肺静脉</span>。"},
+  {id:63, cat:"循环", q:"凡是心脏左侧及相连血管都流____，凡是心脏右侧及相连血管都流____。", a:"凡是心脏左侧及相连血管都流<span class='highlight'>动脉血</span>，凡是心脏右侧及相连血管都流<span class='highlight'>静脉血</span>。"},
+  {id:64, cat:"循环", q:"心脏处血液流动方向：从____。", a:"心脏处血液流动方向：从<span class='highlight'>静脉→心房→心室→动脉</span>。"},
+  {id:65, cat:"循环", q:"组织里气体交换：动脉血变成静脉血，所以经过体循环血液变化：____。肺泡里气体交换：静脉血变成动脉血，所以经过肺循环血液变化：____。", a:"组织里气体交换：动脉血变成静脉血，所以经过体循环血液变化：<span class='highlight'>动脉血变成静脉血</span>。肺泡里气体交换：静脉血变成动脉血，所以经过肺循环血液变化：<span class='highlight'>静脉血变成动脉血</span>。"},
+  {id:66, cat:"循环", q:"呼吸系统包括____，____是气体交换的场所，呼吸道包括____、____、____、____、____。", a:"呼吸系统包括<span class='highlight'>呼吸道和肺</span>，<span class='highlight'>肺</span>是气体交换的场所，呼吸道包括<span class='highlight'>鼻</span>、<span class='highlight'>咽</span>、<span class='highlight'>喉</span>、<span class='highlight'>气管</span>、<span class='highlight'>支气管</span>。"},
+  {id:67, cat:"循环", q:"呼吸包括①肺与外界的气体交换②肺泡与血液的气体交换③气体在血液中运输④血液与组织细胞的气体交换。①肺与外界的气体交换是通过____实现的，②④气体交换都是通过____实现的。", a:"呼吸包括①肺与外界的气体交换②肺泡与血液的气体交换③气体在血液中运输④血液与组织细胞的气体交换。①肺与外界的气体交换是通过<span class='highlight'>呼吸运动</span>实现的，②④气体交换都是通过<span class='highlight'>气体的扩散</span>实现的。"},
+  {id:68, cat:"循环", q:"吸气时肋间肌和膈肌____，膈顶____，胸廓和肺____，肺内气压____，气体进入肺。", a:"吸气时肋间肌和膈肌<span class='highlight'>收缩</span>，膈顶<span class='highlight'>下降</span>，胸廓和肺<span class='highlight'>扩大</span>，肺内气压<span class='highlight'>下降</span>，气体进入肺。"},
+  {id:69, cat:"泌尿", q:"泌尿系统组成：____（形成尿液）、____（输送尿液）、____（暂时贮存尿液）、____（排出尿液）。", a:"泌尿系统组成：<span class='highlight'>肾</span>（形成尿液）、<span class='highlight'>输尿管</span>（输送尿液）、<span class='highlight'>膀胱</span>（暂时贮存尿液）、<span class='highlight'>尿道</span>（排出尿液）。"},
+  {id:70, cat:"泌尿", q:"尿液所含成分最少，只含____；血液（血浆）中所含成分最多；原尿所含成分居中间。", a:"尿液所含成分最少，只含<span class='highlight'>水、无机盐、尿素</span>；血液（血浆）中所含成分最多；原尿所含成分居中间。"},
+  {id:71, cat:"泌尿", q:"血尿和蛋白尿病变部位是____；尿糖可能____，可能____分泌胰岛素不足。", a:"血尿和蛋白尿病变部位是<span class='highlight'>肾小球</span>；尿糖可能<span class='highlight'>肾小管</span>，可能<span class='highlight'>胰岛</span>分泌胰岛素不足。"},
+  {id:72, cat:"泌尿", q:"人体排泄的主要器官有____、____、____；大肠、肛门排出粪便是____。", a:"人体排泄的主要器官有<span class='highlight'>皮肤</span>、<span class='highlight'>肾</span>、<span class='highlight'>肺</span>；大肠、肛门排出粪便是<span class='highlight'>排遗</span>。"},
+  {id:73, cat:"神经", q:"大脑灰质位于表层，又叫____，是调节生命活动最高级中枢（条件反射的中枢）。", a:"大脑灰质位于表层，又叫<span class='highlight'>大脑皮层</span>，是调节生命活动最高级中枢（条件反射的中枢）。"},
+  {id:74, cat:"神经", q:"神经调节的基本方式是____，反射的结构基础是____。", a:"神经调节的基本方式是<span class='highlight'>反射</span>，反射的结构基础是<span class='highlight'>反射弧</span>。"},
+  {id:75, cat:"神经", q:"非条件反射____，____，如吃食物分泌唾液、膝跳反射、呼吸、眨眼、缩手等。非条件反射的中枢在____。", a:"非条件反射<span class='highlight'>生来就有</span>，<span class='highlight'>不会消退</span>，如吃食物分泌唾液、膝跳反射、呼吸、眨眼、缩手等。非条件反射的中枢在<span class='highlight'>脊髓</span>。"},
+  {id:76, cat:"神经", q:"人类特有的条件反射的特征是对抽象的____、____等信息发生的条件反射。", a:"人类特有的条件反射的特征是对抽象的<span class='highlight'>语言</span>、<span class='highlight'>文字</span>等信息发生的条件反射。"},
+  {id:77, cat:"神经", q:"人体的运动是在____的支配下，由____牵拉着____围绕____进行的。", a:"人体的运动是在<span class='highlight'>神经系统</span>的支配下，由<span class='highlight'>肌肉</span>牵拉着<span class='highlight'>骨</span>围绕<span class='highlight'>关节</span>进行的。"},
+  {id:78, cat:"运动", q:"屈肘时，肱二头肌____，肱三头肌____；伸肘时，肌肉状态____。", a:"屈肘时，肱二头肌<span class='highlight'>收缩</span>，肱三头肌<span class='highlight'>舒张</span>；伸肘时，肌肉状态<span class='highlight'>相反</span>。"},
+  {id:79, cat:"感觉", q:"眼球中的成像部位是____；视觉形成部位是____。", a:"眼球中的成像部位是<span class='highlight'>视网膜</span>；视觉形成部位是<span class='highlight'>大脑皮层的视觉中枢</span>。"},
+  {id:80, cat:"感觉", q:"近视：由于眼球前后径____或晶状体曲度____，物像落在视网膜的____。矫正：____。远视相反。", a:"近视：由于眼球前后径<span class='highlight'>过长</span>或晶状体曲度<span class='highlight'>过大</span>，物像落在视网膜的<span class='highlight'>前方</span>。矫正：<span class='highlight'>凹透镜</span>。远视相反。"},
+  {id:81, cat:"感觉", q:"遇到巨大声响时，要迅速____（或闭口并用双手堵耳），使____内外的气压保持平衡。", a:"遇到巨大声响时，要迅速<span class='highlight'>张口</span>（或闭口并用双手堵耳），使<span class='highlight'>鼓膜</span>内外的气压保持平衡。"},
+  {id:82, cat:"内分泌", q:"胎儿期甲状腺激素分泌不足患____，成年后甲状腺激素分泌不足患____（俗称：大脖子病），成年后甲状腺激素分泌过多患____。", a:"胎儿期甲状腺激素分泌不足患<span class='highlight'>呆小症</span>，成年后甲状腺激素分泌不足患<span class='highlight'>地方性甲状腺肿</span>（俗称：大脖子病），成年后甲状腺激素分泌过多患<span class='highlight'>甲亢</span>。"},
+  {id:83, cat:"内分泌", q:"____分泌不足患糖尿病。", a:"<span class='highlight'>胰岛素</span>分泌不足患糖尿病。"},
+  {id:84, cat:"内分泌", q:"内分泌腺有垂体、甲状腺、胸腺、肾上腺、胰岛、性腺（卵巢和睾丸）；最大的内分泌腺是____。", a:"内分泌腺有垂体、甲状腺、胸腺、肾上腺、胰岛、性腺（卵巢和睾丸）；最大的内分泌腺是<span class='highlight'>甲状腺</span>。"},
+  {id:85, cat:"生殖", q:"青春期发育特点：____、____迅速增加；____发育显著；青春期的性发育：包括____。", a:"青春期发育特点：<span class='highlight'>身高</span>、<span class='highlight'>体重</span>迅速增加；<span class='highlight'>器官功能</span>发育显著；青春期的性发育：包括<span class='highlight'>生殖器官的生长发育和第二性征</span>。"},
+  {id:86, cat:"健康", q:"传染病指由____引起的，能够在____、____或____之间传播的疾病。", a:"传染病指由<span class='highlight'>病原体</span>引起的，能够在<span class='highlight'>人与人</span>、<span class='highlight'>动物与动物</span>或<span class='highlight'>人与动物</span>之间传播的疾病。"},
+  {id:87, cat:"健康", q:"病原体包括____、____、____、____。传染源是____，及____。", a:"病原体包括<span class='highlight'>病毒</span>、<span class='highlight'>细菌</span>、<span class='highlight'>真菌</span>、<span class='highlight'>寄生虫</span>。传染源是<span class='highlight'>患病的人或动物</span>，及<span class='highlight'>病原体携带者</span>。"},
+  {id:88, cat:"健康", q:"艾滋病病原体：____；传染源：____；传播途径：____、____、____。", a:"艾滋病病原体：<span class='highlight'>艾滋病病毒</span>；传染源：<span class='highlight'>艾滋病患者和艾滋病病毒携带者</span>；传播途径：<span class='highlight'>血液传播</span>、<span class='highlight'>性传播</span>、<span class='highlight'>母婴传播</span>。"},
+  {id:89, cat:"健康", q:"隔离病人、掩埋病死动物是____，锻炼身体、接种疫苗是____，其他是____。", a:"隔离病人、掩埋病死动物是<span class='highlight'>控制传染源</span>，锻炼身体、接种疫苗是<span class='highlight'>保护易感人群</span>，其他是<span class='highlight'>切断传播途径</span>。"},
+  {id:90, cat:"健康", q:"特异性免疫：淋巴细胞产生____；接种____；____。其他是非特异性免疫。", a:"特异性免疫：淋巴细胞产生<span class='highlight'>抗体</span>；接种<span class='highlight'>疫苗</span>；<span class='highlight'>患过某种疾病不再患该病</span>。其他是非特异性免疫。"},
+  {id:91, cat:"健康", q:"抗原包括____、____、____、____、____等异物，抗原一般是外来的或有害的。抗体是____产生的____。一种抗体只能消灭____抗原。", a:"抗原包括<span class='highlight'>病原体</span>、<span class='highlight'>疫苗</span>、<span class='highlight'>过敏源</span>、<span class='highlight'>移植器官</span>、<span class='highlight'>癌细胞</span>等异物，抗原一般是外来的或有害的。抗体是<span class='highlight'>身体</span>产生的<span class='highlight'>有利物质</span>。一种抗体只能消灭<span class='highlight'>一种</span>抗原。"},
+  {id:92, cat:"健康", q:"冠心病（____）、高血压是____。", a:"冠心病（<span class='highlight'>冠状动脉发生病变</span>）、高血压是<span class='highlight'>心血管疾病</span>。"},
+  {id:93, cat:"健康", q:"____是青少年和儿童中发病率最高的恶性肿瘤（癌症），____是一种有效的治疗方法。", a:"<span class='highlight'>白血病</span>是青少年和儿童中发病率最高的恶性肿瘤（癌症），<span class='highlight'>造血干细胞移植</span>是一种有效的治疗方法。"},
+  {id:94, cat:"健康", q:"____（如X射线、电离辐射等）、____（如亚硝酸盐、黄曲霉素等）、____（如乙肝病毒、疱疹病毒等）。", a:"<span class='highlight'>物理致癌因子</span>（如X射线、电离辐射等）、<span class='highlight'>化学致癌因子</span>（如亚硝酸盐、黄曲霉素等）、<span class='highlight'>病毒致癌因子</span>（如乙肝病毒、疱疹病毒等）。"},
+  {id:95, cat:"生殖", q:"无性生殖包括____（扦插、压条、嫁接），____（水螅、酵母菌），____（细菌、草履虫），____。", a:"无性生殖包括<span class='highlight'>营养生殖</span>（扦插、压条、嫁接），<span class='highlight'>出芽生殖</span>（水螅、酵母菌），<span class='highlight'>分裂生殖</span>（细菌、草履虫），<span class='highlight'>植物组织培养</span>。"},
+  {id:96, cat:"生殖", q:"营养生殖优点：____，____；", a:"营养生殖优点：<span class='highlight'>保持亲本优良性状</span>，<span class='highlight'>加快繁殖速度</span>；"},
+  {id:97, cat:"生殖", q:"要实现一个植株开多种花色，结多个品种果实，采用____，嫁接后开的花、结的果与____一致。嫁接成功的关键是接穗和砧木的____紧密贴合。", a:"要实现一个植株开多种花色，结多个品种果实，采用<span class='highlight'>嫁接</span>，嫁接后开的花、结的果与<span class='highlight'>接穗</span>一致。嫁接成功的关键是接穗和砧木的<span class='highlight'>形成层</span>紧密贴合。"},
+  {id:98, cat:"生殖", q:"植物组织培养：短时间内生产出____的植物，获得____的植株。", a:"植物组织培养：短时间内生产出<span class='highlight'>大批的</span>植物，获得<span class='highlight'>无病毒感染</span>的植株。"},
+  {id:99, cat:"生殖", q:"植物有性生殖是利用____、____、____的繁殖。动物、植物有性生殖的起点都是____。", a:"植物有性生殖是利用<span class='highlight'>花</span>、<span class='highlight'>果实</span>、<span class='highlight'>种子</span>的繁殖。动物、植物有性生殖的起点都是<span class='highlight'>受精卵</span>。"},
+  {id:100, cat:"生殖", q:"昆虫生殖是____，家蚕、蚊、蝇、蜜蜂、蝴蝶是____（受精卵、幼虫、蛹、成虫）；蝗虫、螳螂、蟋蟀、蜚蠊是____（受精卵、若虫、成虫）。", a:"昆虫生殖是<span class='highlight'>有性生殖</span>，家蚕、蚊、蝇、蜜蜂、蝴蝶是<span class='highlight'>完全变态发育</span>（受精卵、幼虫、蛹、成虫）；蝗虫、螳螂、蟋蟀、蜚蠊是<span class='highlight'>不完全变态发育</span>（受精卵、若虫、成虫）。"},
+  {id:101, cat:"生殖", q:"哺乳动物的有性生殖，精子与卵细胞在____相遇，并结合形成受精卵。胚胎发育的场所是____。胎儿通过____从母体获取氧气和营养物质，排出二氧化碳等代谢废物。", a:"哺乳动物的有性生殖，精子与卵细胞在<span class='highlight'>输卵管</span>相遇，并结合形成受精卵。胚胎发育的场所是<span class='highlight'>子宫</span>。胎儿通过<span class='highlight'>胎盘</span>从母体获取氧气和营养物质，排出二氧化碳等代谢废物。"},
+  {id:102, cat:"遗传", q:"染色体主要是由____组成。____是主要遗传物质，呈____结构。DNA上有特定遗传效应的片段叫做____。", a:"染色体主要是由<span class='highlight'>DNA和蛋白质</span>组成。<span class='highlight'>DNA</span>是主要遗传物质，呈<span class='highlight'>双螺旋</span>结构。DNA上有特定遗传效应的片段叫做<span class='highlight'>基因</span>。"},
+  {id:103, cat:"遗传", q:"人的体细胞有____染色体，生殖细胞有____染色体。体细胞、生殖细胞内都有____，也都有____。", a:"人的体细胞有<span class='highlight'>23对</span>染色体，生殖细胞有<span class='highlight'>23条</span>染色体。体细胞、生殖细胞内都有<span class='highlight'>常染色体</span>，也都有<span class='highlight'>性染色体</span>。"},
+  {id:104, cat:"遗传", q:"近亲结婚会使____的发病率提高，因此____是预防遗传病最有效的措施。", a:"近亲结婚会使<span class='highlight'>遗传病</span>的发病率提高，因此<span class='highlight'>禁止近亲结婚</span>是预防遗传病最有效的措施。"},
+  {id:105, cat:"遗传", q:"可遗传变异与____改变有关，只有____的环境可导致遗传物质改变。（遗传病、镰刀型贫血、白化苗、太空椒、转基因的产品）。", a:"可遗传变异与<span class='highlight'>遗传物质</span>改变有关，只有<span class='highlight'>太空和辐射</span>的环境可导致遗传物质改变。（遗传病、镰刀型贫血、白化苗、太空椒、转基因的产品）。"},
+  {id:106, cat:"遗传", q:"转基因技术关键是提取____移入到另一个体中；转基因技术的产物：____、____。", a:"转基因技术关键是提取<span class='highlight'>外源基因</span>移入到另一个体中；转基因技术的产物：<span class='highlight'>巨型小鼠</span>、<span class='highlight'>抗虫棉</span>。"},
+  {id:107, cat:"进化", q:"根据化学起源学说，生命起源的第一步发生在____，原始生命诞生在____。", a:"根据化学起源学说，生命起源的第一步发生在<span class='highlight'>原始大气</span>，原始生命诞生在<span class='highlight'>原始海洋</span>。"},
+  {id:108, cat:"进化", q:"____是生物进化的直接证据，但不是唯一证据。始祖鸟化石说明：鸟类是由____进化而来的。", a:"<span class='highlight'>化石</span>是生物进化的直接证据，但不是唯一证据。始祖鸟化石说明：鸟类是由<span class='highlight'>古代爬行动物</span>进化而来的。"},
+  {id:109, cat:"进化", q:"生物进化是____的结果。", a:"生物进化是<span class='highlight'>自然选择</span>的结果。"},
+  {id:110, cat:"进化", q:"人类的进化分为____、____、____和____，最显著的变化之一是____。____是人类进化史中关键的一个阶段。", a:"人类的进化分为<span class='highlight'>南方古猿</span>、<span class='highlight'>能人</span>、<span class='highlight'>直立人</span>和<span class='highlight'>智人</span>，最显著的变化之一是<span class='highlight'>脑容量的增加</span>。<span class='highlight'>直立人</span>是人类进化史中关键的一个阶段。"}
+];
+
+/* ========================== 状态管理 ========================== */
+let state = {
+  mode: 'all',       // all | random | review
+  order: [],         // 当前学习顺序的卡片索引
+  currentIdx: 0,     // 当前在order中的位置
+  revealed: false,   // 当前卡片是否已揭示
+  mastered: new Set(), // 已记住的id集合
+  review: new Set(),   // 需复习的id集合
+};
+
+const STORAGE_KEY = 'bio_flashcards_v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state.mastered = new Set(saved.mastered || []);
+      state.review = new Set(saved.review || []);
+    }
+  } catch(e) {}
+  updateHomeStats();
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    mastered: Array.from(state.mastered),
+    review: Array.from(state.review)
+  }));
+  updateHomeStats();
+}
+
+function updateHomeStats() {
+  document.getElementById('stat-mastered').textContent = state.mastered.size;
+  document.getElementById('stat-review').textContent = state.review.size;
+}
+
+/* ========================== 页面切换 ========================== */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  if (id === 'page-home') document.querySelectorAll('.tab-bar button')[0].classList.add('active');
+  if (id === 'page-list') document.querySelectorAll('.tab-bar button')[1].classList.add('active');
+  if (id === 'page-settings') document.querySelectorAll('.tab-bar button')[2].classList.add('active');
+  if (id === 'page-list') renderList();
+}
+
+/* ========================== 学习模式 ========================== */
+function startStudy(mode) {
+  state.mode = mode;
+  state.revealed = false;
+
+  if (mode === 'review') {
+    if (state.review.size === 0) {
+      showToast('目前没有标记为"需复习"的句子，先去学习吧！');
+      return;
+    }
+    state.order = Array.from(state.review).map(id => RAW_CARDS.findIndex(c => c.id === id));
+  } else if (mode === 'random') {
+    state.order = Array.from({length: RAW_CARDS.length}, (_, i) => i);
+    for (let i = state.order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [state.order[i], state.order[j]] = [state.order[j], state.order[i]];
+    }
+  } else {
+    state.order = Array.from({length: RAW_CARDS.length}, (_, i) => i);
+  }
+
+  state.currentIdx = 0;
+  showPage('page-study');
+  renderCard();
+}
+
+function renderCard() {
+  const cardIndex = state.order[state.currentIdx];
+  const card = RAW_CARDS[cardIndex];
+  state.revealed = false;
+
+  document.getElementById('study-current').textContent = state.currentIdx + 1;
+  document.getElementById('study-total').textContent = state.order.length;
+  document.getElementById('study-progress').style.width = ((state.currentIdx + 1) / state.order.length * 100) + '%';
+
+  document.getElementById('card-num').textContent = '#' + card.id;
+  document.getElementById('card-cat').textContent = card.cat;
+  document.getElementById('card-content').innerHTML = card.q;
+  document.getElementById('card-hint').textContent = '点击卡片查看答案';
+  document.getElementById('card-hint').style.display = 'block';
+
+  document.getElementById('btn-reveal').style.display = 'inline-block';
+  document.getElementById('btn-reveal').disabled = false;
+  document.getElementById('rate-btns').style.display = 'none';
+
+  // 动画
+  const fc = document.getElementById('flash-card');
+  fc.classList.remove('fade-in');
+  void fc.offsetWidth;
+  fc.classList.add('fade-in');
+}
+
+function revealCard() {
+  if (state.revealed) return;
+  state.revealed = true;
+  const cardIndex = state.order[state.currentIdx];
+  const card = RAW_CARDS[cardIndex];
+  document.getElementById('card-content').innerHTML = card.a;
+  document.getElementById('card-hint').style.display = 'none';
+  document.getElementById('btn-reveal').style.display = 'none';
+  document.getElementById('rate-btns').style.display = 'flex';
+}
+
+function rateCard(isMastered) {
+  const cardIndex = state.order[state.currentIdx];
+  const card = RAW_CARDS[cardIndex];
+  if (isMastered) {
+    state.mastered.add(card.id);
+    state.review.delete(card.id);
+  } else {
+    state.review.add(card.id);
+    state.mastered.delete(card.id);
+  }
+  saveState();
+  nextCard();
+}
+
+function nextCard() {
+  if (state.currentIdx < state.order.length - 1) {
+    state.currentIdx++;
+    renderCard();
+  } else {
+    showToast('本轮学习完成！');
+    setTimeout(() => showPage('page-home'), 800);
+  }
+}
+
+function prevCard() {
+  if (state.currentIdx > 0) {
+    state.currentIdx--;
+    renderCard();
+  }
+}
+
+/* ========================== 列表页 ========================== */
+function renderList() {
+  const search = document.getElementById('list-search').value.trim().toLowerCase();
+  const filter = document.getElementById('list-filter').value;
+  const container = document.getElementById('list-container');
+
+  let filtered = RAW_CARDS;
+  if (search) {
+    filtered = filtered.filter(c => (c.q + c.a).toLowerCase().includes(search));
+  }
+  if (filter) {
+    filtered = filtered.filter(c => c.cat === filter);
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="big">🔍</div><div>没有找到匹配的句子</div></div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(c => {
+    const isMastered = state.mastered.has(c.id);
+    const isReview = state.review.has(c.id);
+    let statusHtml = '';
+    if (isMastered) statusHtml = '<div class="item-status">已记住 ✓</div>';
+    else if (isReview) statusHtml = '<div class="item-status pending">需复习 ↻</div>';
+    else statusHtml = '<div class="item-status pending">未学习</div>';
+
+    return `<div class="list-item" onclick="jumpToStudy(${c.id})">
+      <div class="item-top">
+        <span class="item-id">#${c.id}</span>
+        <span class="item-cat">${c.cat}</span>
+      </div>
+      <div class="item-text">${c.a}</div>
+      ${statusHtml}
+    </div>`;
+  }).join('');
+}
+
+function jumpToStudy(id) {
+  const idx = RAW_CARDS.findIndex(c => c.id === id);
+  if (idx === -1) return;
+  state.mode = 'all';
+  state.order = [idx];
+  state.currentIdx = 0;
+  state.revealed = false;
+  showPage('page-study');
+  renderCard();
+}
+
+/* ========================== 设置 ========================== */
+function resetProgress() {
+  if (!confirm('确定要清空所有学习进度吗？')) return;
+  state.mastered.clear();
+  state.review.clear();
+  saveState();
+  showToast('学习进度已重置');
+}
+
+/* ========================== 工具 ========================== */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+/* ========================== 手势支持 ========================== */
+(function initGestures() {
+  const area = document.getElementById('card-area');
+  let startX = 0;
+  area.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+  area.addEventListener('touchend', e => {
+    const endX = e.changedTouches[0].clientX;
+    const dx = endX - startX;
+    if (Math.abs(dx) > 60) {
+      if (dx < 0) nextCard();
+      else prevCard();
+    }
+  });
+})();
+
+/* ========================== 初始化 ========================== */
+loadState();
+</script>
+</body>
+</html>
