@@ -482,6 +482,7 @@ function loadState() {
       const saved = JSON.parse(raw);
       state.mastered = new Set(saved.mastered || []);
       state.review = new Set(saved.review || []);
+      state.lastPos = saved.lastPos || null;
     }
   } catch(e) {}
   updateHomeStats();
@@ -490,7 +491,8 @@ function loadState() {
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     mastered: Array.from(state.mastered),
-    review: Array.from(state.review)
+    review: Array.from(state.review),
+    lastPos: state.lastPos
   }));
   updateHomeStats();
 }
@@ -532,7 +534,14 @@ function startStudy(mode) {
     state.order = Array.from({length: RAW_CARDS.length}, (_, i) => i);
   }
 
-  state.currentIdx = 0;
+  // 顺序模式下，恢复上次学习位置
+  if (mode === 'all' && state.lastPos) {
+    const idx = state.order.findIndex(i => RAW_CARDS[i].id === state.lastPos);
+    state.currentIdx = idx >= 0 ? idx : 0;
+  } else {
+    state.currentIdx = 0;
+  }
+
   showPage('page-study');
   renderCard();
 }
@@ -591,8 +600,11 @@ function rateCard(isMastered) {
 function nextCard() {
   if (state.currentIdx < state.order.length - 1) {
     state.currentIdx++;
+    saveProgressPos();
     renderCard();
   } else {
+    state.lastPos = null;
+    saveState();
     showToast('本轮学习完成！');
     setTimeout(() => showPage('page-home'), 800);
   }
@@ -601,7 +613,16 @@ function nextCard() {
 function prevCard() {
   if (state.currentIdx > 0) {
     state.currentIdx--;
+    saveProgressPos();
     renderCard();
+  }
+}
+
+function saveProgressPos() {
+  if (state.mode === 'all') {
+    const cardIndex = state.order[state.currentIdx];
+    state.lastPos = RAW_CARDS[cardIndex].id;
+    saveState();
   }
 }
 
